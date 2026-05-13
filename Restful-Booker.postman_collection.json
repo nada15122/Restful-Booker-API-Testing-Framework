@@ -1,0 +1,859 @@
+{
+  "info": {
+    "_postman_id": "46d6f9eb-3d5c-42cc-bae1-e124ef1c345a",
+    "name": "Restful-Booker",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "54085155",
+    "_collection_link": "https://go.postman.co/collection/54085155-46d6f9eb-3d5c-42cc-bae1-e124ef1c345a?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "CreateToken",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// 1. AUTH – Create Token\r",
+                  "if (pm.response.code === 200 && pm.response.text().includes(\"token\")) {\r",
+                  "    var jsonData = pm.response.json();\r",
+                  "    \r",
+                  "    // Summary #1: Validate token response structure and performance\r",
+                  "    pm.test(\"Validate that status code is 200\", function () {\r",
+                  "        pm.response.to.have.status(200);\r",
+                  "    });\r",
+                  "    \r",
+                  "    pm.test(\"Validate that response contains token property\", function () {\r",
+                  "        pm.expect(jsonData).to.have.property(\"token\");\r",
+                  "    });\r",
+                  "\r",
+                  "    pm.test(\"Validate that token is not empty\", function () {\r",
+                  "        pm.expect(jsonData.token).to.not.eql(\"\");\r",
+                  "    });\r",
+                  "    \r",
+                  "    pm.test(\"Validate that token is not null\", function () {\r",
+                  "        pm.expect(jsonData.token).to.not.eql(null);\r",
+                  "    });\r",
+                  "    \r",
+                  "    pm.test(\"Validate that token is a string\", function () {\r",
+                  "        pm.expect(jsonData.token).to.be.a(\"string\");\r",
+                  "    });\r",
+                  "    \r",
+                  "    pm.test(\"Validate that token length is reasonable (>10 chars)\", function () {\r",
+                  "        pm.expect(jsonData.token.length).to.be.above(10);\r",
+                  "    });\r",
+                  "\r",
+                  "    pm.test(\"Validate that response time < 500 ms\", function () {\r",
+                  "        pm.expect(pm.response.responseTime).to.be.below(700);\r",
+                  "    });\r",
+                  "    \r",
+                  "    pm.environment.set(\"token\", jsonData.token);\r",
+                  "    \r",
+                  "} else {\r",
+                  "    // Summary #2 and TC-05: Handle invalid credentials or empty body (when the token is not generated)\r",
+                  "    pm.test(\"Validate that status code is acceptable (200, 400, or 500)\", function () {\r",
+                  "        pm.expect(pm.response.code).to.be.oneOf([200, 400, 500]);\r",
+                  "    });\r",
+                  "\r",
+                  "    pm.test(\"Validate that token should NOT be returned\", function () {\r",
+                  "        pm.expect(pm.response.text()).to.not.include(\"token\");\r",
+                  "    });\r",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"username\" : \"admin\",\r\n    \"password\" : \"password123\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseURL}}/auth",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "auth"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Booking",
+      "item": [
+        {
+          "name": "CreateBooking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// 2. BOOKING – Create Booking\r",
+                  "var jsonData;\r",
+                  "try {\r",
+                  "    jsonData = pm.response.json();\r",
+                  "} catch (e) {\r",
+                  "    jsonData = null;\r",
+                  "}\r",
+                  "\r",
+                  "if (pm.response.code === 200 && jsonData && jsonData.bookingid) {\r",
+                  "    \r",
+                  "    // Summary #1: Validate booking data correctness\r",
+                  "    pm.environment.set(\"id\", jsonData.bookingid);\r",
+                  "    if (jsonData.booking) {\r",
+                  "        pm.environment.set(\"firstname\", jsonData.booking.firstname);\r",
+                  "        pm.environment.set(\"lastname\", jsonData.booking.lastname);\r",
+                  "    }\r",
+                  "\r",
+                  "    pm.test(\"Validate that status code is 200\", function () {\r",
+                  "        pm.response.to.have.status(200);\r",
+                  "    });\r",
+                  "\r",
+                  "    pm.test(\"Validate that booking id is returned and not null\", function () {\r",
+                  "        pm.expect(jsonData).to.have.property('bookingid');\r",
+                  "        pm.expect(jsonData.bookingid).to.not.be.null;\r",
+                  "    });\r",
+                  "\r",
+                  "    pm.test(\"Validate that the response contains the booking object\", function () {\r",
+                  "        pm.expect(jsonData).to.have.property('booking');\r",
+                  "        pm.expect(jsonData.booking).to.not.be.null;\r",
+                  "    });\r",
+                  "\r",
+                  "    pm.test(\"Validate that totalprice is a number\", function () {\r",
+                  "        pm.expect(jsonData.booking.totalprice).to.be.a('number');\r",
+                  "    });\r",
+                  "\r",
+                  "    pm.test(\"Validate that response time is less than 700 ms\", function () {\r",
+                  "        pm.expect(pm.response.responseTime).to.be.below(700);\r",
+                  "    });\r",
+                  "\r",
+                  "} else {\r",
+                  "    \r",
+                  "    // Summary #2 & Summary #3: Missing required fields / Invalid date range handling\r",
+                  "    pm.test(\"Validate that the request failed and status code is an error code (400, 422, or 500)\", function () {\r",
+                  "        pm.expect(pm.response.code).to.be.oneOf([400, 422, 500]);\r",
+                  "    });\r",
+                  "    \r",
+                  "    pm.test(\"Validate that no booking ID was returned\", function () {\r",
+                  "        if (jsonData) {\r",
+                  "            pm.expect(jsonData).to.not.have.property('bookingid');\r",
+                  "        } else {\r",
+                  "            // التحقق من النص العام للتأكد من عدم توليد الـ bookingid\r",
+                  "            pm.expect(pm.response.text()).to.not.include(\"bookingid\");\r",
+                  "        }\r",
+                  "    });\r",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "\r\n\r\n{ \r\n    \"firstname\": \"{{firstname}}\",\r\n    \"lastname\" : \"{{lastname}}\",\r\n    \"totalprice\" : 111,\r\n    \"depositpaid\" : true,\r\n    \"bookingdates\" : {\r\n        \"checkin\" : \"2018-01-01\",\r\n        \"checkout\" : \"2019-01-01\"\r\n    },\r\n    \"additionalneeds\" : \"Breakfast\"\r\n}\r\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseURL}}/booking",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "booking"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GetBooking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// 3. BOOKING – Get Booking\r",
+                  "\r",
+                  "var statusCode = pm.response.code;\r",
+                  "var jsonData = null;\r",
+                  "\r",
+                  "try {\r",
+                  "    jsonData = pm.response.json();\r",
+                  "} catch (e) {\r",
+                  "    jsonData = null;\r",
+                  "}\r",
+                  "\r",
+                  "if (statusCode === 200 && jsonData) {\r",
+                  "    \r",
+                  "    // Summary #1: Validate booking structure\r",
+                  "    \r",
+                  "    pm.test(\"Validate that status code is 200\", function () {\r",
+                  "        pm.response.to.have.status(200);\r",
+                  "    });\r",
+                  "\r",
+                  "    pm.test(\"Validate that response time is less than 900ms\", function () {\r",
+                  "        pm.expect(pm.response.responseTime).to.be.below(900);\r",
+                  "    });\r",
+                  "\r",
+                  "    pm.test(\"Validate that response has correct structure and data types\", function () {\r",
+                  "        pm.expect(jsonData).to.have.property('firstname');\r",
+                  "        pm.expect(jsonData).to.have.property('lastname');\r",
+                  "        pm.expect(jsonData).to.have.property('bookingdates');\r",
+                  "        \r",
+                  "        pm.expect(jsonData.firstname).to.be.a('string');\r",
+                  "        pm.expect(jsonData.lastname).to.be.a('string');\r",
+                  "        pm.expect(jsonData.bookingdates).to.be.an('object');\r",
+                  "    });\r",
+                  "\r",
+                  "    pm.test(\"Validate that bookingdates object contains checkin and checkout\", function () {\r",
+                  "        pm.expect(jsonData.bookingdates).to.have.property('checkin');\r",
+                  "        pm.expect(jsonData.bookingdates).to.have.property('checkout');\r",
+                  "    });\r",
+                  "\r",
+                  "    pm.test(\"Validate that data matches created booking (Environment data)\", function () {\r",
+                  "        var expectedFirstname = pm.environment.get(\"firstname\") || \"Ahmed\";\r",
+                  "        var expectedLastname = pm.environment.get(\"lastname\") || \"Test\";\r",
+                  "        \r",
+                  "        pm.expect(jsonData.firstname).to.eql(expectedFirstname);\r",
+                  "        pm.expect(jsonData.lastname).to.eql(expectedLastname);\r",
+                  "    });\r",
+                  "    \r",
+                  "} else if (statusCode === 404) {\r",
+                  "    \r",
+                  "    // Summary #2: Retrieve non-existing booking\r",
+                  "    pm.test(\"Validate that status code is 404 for non-existing booking\", function () {\r",
+                  "        pm.response.to.have.status(404);\r",
+                  "    });\r",
+                  "    \r",
+                  "} else {\r",
+                  "    pm.test(\"Validate that request failed with unexpected status code\", function () {\r",
+                  "        pm.expect.fail(\"Received unexpected status code: \" + statusCode);\r",
+                  "    });\r",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disabledSystemHeaders": {}
+          },
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/booking/{{id}}",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "booking",
+                "{{id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "UpdateBooking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// 5. BOOKING – Partial Update Booking (PATCH)\r",
+                  "\r",
+                  "// Summary #1: Validate updated values\r",
+                  "// Summary #2: Update without token\r",
+                  "\r",
+                  "var statusCode = pm.response.code;\r",
+                  "var jsonData = null;\r",
+                  "\r",
+                  "try {\r",
+                  "    jsonData = pm.response.json();\r",
+                  "} catch (e) {\r",
+                  "    jsonData = null;\r",
+                  "}\r",
+                  "\r",
+                  "if (statusCode === 200 && jsonData) {\r",
+                  "    \r",
+                  "    // Summary #1: Validate updated values\r",
+                  "    pm.test(\"Validate that status code is 200 - Update Successful\", function () {\r",
+                  "        pm.response.to.have.status(200);\r",
+                  "    });\r",
+                  "\r",
+                  "    pm.test(\"Validate that response reflects updated values\", function () {\r",
+                  "        pm.expect(jsonData.firstname).to.eql(\"UpdatedName\");\r",
+                  "    });\r",
+                  "\r",
+                  "    pm.test(\"Validate that other fields remain unchanged\", function () {\r",
+                  "        pm.expect(jsonData).to.have.property('lastname');\r",
+                  "        pm.expect(jsonData).to.have.property('totalprice');\r",
+                  "    });\r",
+                  "\r",
+                  "    pm.test(\"Validate that response time is less than 600 ms\", function () {\r",
+                  "        pm.expect(pm.response.responseTime).to.be.below(600);\r",
+                  "    });\r",
+                  "\r",
+                  "} else if (statusCode === 403 || statusCode === 405) {\r",
+                  "    \r",
+                  "    // Summary #2: Update without token or unauthorized\r",
+                  "    pm.test(\"Validate that status code is 403 or 405 - Forbidden / Method Not Allowed when not authenticated\", function () {\r",
+                  "        pm.expect([403, 405]).to.include(statusCode);\r",
+                  "    });\r",
+                  "\r",
+                  "} else {\r",
+                  "    \r",
+                  "    pm.test(\"Validate that request failed with unexpected status code\", function () {\r",
+                  "        pm.expect.fail(\"Expected status code 200, 403, or 405, but received \" + statusCode);\r",
+                  "    });\r",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "basic",
+              "basic": [
+                {
+                  "key": "password",
+                  "value": "password123",
+                  "type": "string"
+                },
+                {
+                  "key": "username",
+                  "value": "admin",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "token={{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"firstname\" : \"UpdatedName\",\r\n    \"lastname\" : \"{{lastname}}\",\r\n    \"totalprice\" : 111,\r\n    \"depositpaid\" : true,\r\n    \"bookingdates\" : {\r\n        \"checkin\" : \"2018-01-01\",\r\n        \"checkout\" : \"2019-01-01\"\r\n    },\r\n    \"additionalneeds\" : \"Breakfast\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseURL}}/booking/{{id}}",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "booking",
+                "{{id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PartialUpdateBooking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// 5. BOOKING – Partial Update (PATCH)\r",
+                  "\r",
+                  "var statusCode = pm.response.code;\r",
+                  "var jsonData = null;\r",
+                  "\r",
+                  "try {\r",
+                  "    jsonData = pm.response.json();\r",
+                  "} catch (e) {\r",
+                  "    jsonData = null;\r",
+                  "}\r",
+                  "\r",
+                  "if (statusCode === 200 && jsonData) {\r",
+                  "    \r",
+                  "    // Summary #1: Update single field\r",
+                  "\r",
+                  "    pm.test(\"Validate that status code is 200\", function () {\r",
+                  "        pm.response.to.have.status(200);\r",
+                  "    });\r",
+                  "\r",
+                  "    pm.test(\"Validate that response time is less than 600 ms\", function () {\r",
+                  "        pm.expect(pm.response.responseTime).to.be.below(600);\r",
+                  "    });\r",
+                  "\r",
+                  "    pm.test(\"Validate that firstname is successfully updated\", function () {\r",
+                  "        pm.expect(jsonData.firstname).to.eql(\"UpdatedName\");\r",
+                  "    });\r",
+                  "\r",
+                  "    pm.test(\"Validate that other fields remain unchanged and structure is intact\", function () {\r",
+                  "        // Ensuring required keys exist\r",
+                  "        pm.expect(jsonData).to.have.property('lastname');\r",
+                  "        pm.expect(jsonData).to.have.property('totalprice');\r",
+                  "        \r",
+                  "        // Checking against environment variables\r",
+                  "        var expectedLastname = pm.environment.get(\"lastname\") || \"Test\";\r",
+                  "        pm.expect(jsonData.lastname).to.eql(expectedLastname);\r",
+                  "        \r",
+                  "        // Ensure that bookingdates object still exists\r",
+                  "        pm.expect(jsonData).to.have.property('bookingdates');\r",
+                  "        pm.expect(jsonData.bookingdates).to.be.an('object');\r",
+                  "    });\r",
+                  "\r",
+                  "} else if (statusCode === 405) {\r",
+                  "    \r",
+                  "    // Summary #2: Handle method not allowed gracefully    \r",
+                  "    pm.test(\"Validate that status code is 405 - Method Not Allowed\", function () {\r",
+                  "        pm.response.to.have.status(405);\r",
+                  "    });\r",
+                  "\r",
+                  "} else if (statusCode === 403) {\r",
+                  "    \r",
+                  "    // Summary #3: Handle unauthorized access    \r",
+                  "    pm.test(\"Validate that status code is 403 - Forbidden\", function () {\r",
+                  "        pm.response.to.have.status(403);\r",
+                  "    });\r",
+                  "\r",
+                  "} else {\r",
+                  "    pm.test(\"Validate that request failed with unexpected status code\", function () {\r",
+                  "        pm.expect.fail(\"Received unexpected status code: \" + statusCode);\r",
+                  "    });\r",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disabledSystemHeaders": {}
+          },
+          "request": {
+            "auth": {
+              "type": "basic",
+              "basic": [
+                {
+                  "key": "password",
+                  "value": "password123",
+                  "type": "string"
+                },
+                {
+                  "key": "username",
+                  "value": "admin",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "token={{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"firstname\": \"UpdatedName\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseURL}}/booking/{{id}}",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "booking",
+                "{{id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DeleteBooking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// 6. BOOKING – Delete Booking\r",
+                  "\r",
+                  "var statusCode = pm.response.code;\r",
+                  "\r",
+                  "// Summary #1: Delete booking with valid token\r",
+                  "if (statusCode === 201) {\r",
+                  "    \r",
+                  "    pm.test(\"Validate that status code is 201 on successful deletion\", function () {\r",
+                  "        pm.response.to.have.status(201);\r",
+                  "    });\r",
+                  "    \r",
+                  "    // Summary #2: Validate deletion - GET returns 404\r",
+                  "    pm.test(\"Validate that GET booking returns 404 after deletion\", function () {\r",
+                  "        const bookingId = pm.environment.get(\"id\");\r",
+                  "        const baseUrl = pm.environment.get(\"baseURL\");\r",
+                  "\r",
+                  "        pm.sendRequest({\r",
+                  "            url: baseUrl + \"/booking/\" + bookingId,\r",
+                  "            method: 'GET',\r",
+                  "            header: {\r",
+                  "                'Accept': 'application/json'\r",
+                  "            }\r",
+                  "        }, function (err, res) {\r",
+                  "            if (err) {\r",
+                  "                console.log(\"Error during GET request:\", err);\r",
+                  "            } else {\r",
+                  "                pm.expect(res.code).to.equal(404);\r",
+                  "            }\r",
+                  "        });\r",
+                  "    });\r",
+                  "    \r",
+                  "    // Summary #3: Delete already deleted booking\r",
+                  "    pm.test(\"Validate that deleting already deleted booking returns 404 or 405\", function () {\r",
+                  "        const bookingId = pm.environment.get(\"id\");\r",
+                  "        const baseUrl = pm.environment.get(\"baseURL\");\r",
+                  "        const token = pm.environment.get(\"token\");\r",
+                  "\r",
+                  "        pm.sendRequest({\r",
+                  "            url: baseUrl + \"/booking/\" + bookingId,\r",
+                  "            method: 'DELETE',\r",
+                  "            header: {\r",
+                  "                'Content-Type': 'application/json',\r",
+                  "                'Cookie': 'token=' + token\r",
+                  "            }\r",
+                  "        }, function (err, res) {\r",
+                  "            if (err) {\r",
+                  "                console.log(\"Error during DELETE request:\", err);\r",
+                  "            } else {\r",
+                  "                pm.expect(res.code).to.be.oneOf([404, 405]);\r",
+                  "            }\r",
+                  "        });\r",
+                  "    });\r",
+                  "    \r",
+                  "// Summary #4 (TC-31): Delete booking without token / authentication\r",
+                  "} else if (statusCode === 403 || statusCode === 405) {\r",
+                  "    \r",
+                  "    pm.test(\"Validate that status code is 403 or 405 when missing token\", function () {\r",
+                  "        pm.expect(statusCode).to.be.oneOf([403, 405]);\r",
+                  "    });\r",
+                  "\r",
+                  "// Summary #3: Handle already deleted or non-existent booking\r",
+                  "} else if (statusCode === 404) {\r",
+                  "    \r",
+                  "    pm.test(\"Validate that status code is 404 for non-existent booking\", function () {\r",
+                  "        pm.expect(statusCode).to.equal(404);\r",
+                  "    });\r",
+                  "\r",
+                  "} else {\r",
+                  "    \r",
+                  "    pm.test(\"Validate that unexpected status code triggers an error\", function () {\r",
+                  "        pm.expect.fail(\"Received unexpected status code: \" + statusCode);\r",
+                  "    });\r",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "basic",
+              "basic": [
+                {
+                  "key": "password",
+                  "value": "password123",
+                  "type": "string"
+                },
+                {
+                  "key": "username",
+                  "value": "admin",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "token={{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseURL}}/booking/{{id}}",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "booking",
+                "{{id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GetBookingIds",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// 1. GET ALL BOOKINGS / FILTER BOOKINGS\r",
+                  "\r",
+                  "// 1. Validate that the status code is 200\r",
+                  "pm.test(\"Validate that the status code is 200\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "// 2. Validate that the response is an array\r",
+                  "pm.test(\"Validate that the response is an array\", function () {\r",
+                  "    pm.expect(pm.response.json()).to.be.an('array');\r",
+                  "});\r",
+                  "\r",
+                  "// 3. Validate that each object in the array has a bookingid\r",
+                  "pm.test(\"Validate that all objects in the array have a bookingid\", function () {\r",
+                  "    const response = pm.response.json();\r",
+                  "    \r",
+                  "    pm.expect(response.length).to.be.greaterThan(0, \"The response array is empty\");\r",
+                  "    \r",
+                  "    response.forEach(function (booking) {\r",
+                  "        pm.expect(booking).to.have.property('bookingid');\r",
+                  "    });\r",
+                  "});\r",
+                  "\r",
+                  "// 4. Validate that response time is acceptable\r",
+                  "pm.test(\"Validate that response time is less than 900 ms\", function () {\r",
+                  "    pm.expect(pm.response.responseTime).to.be.below(900);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "basic",
+              "basic": [
+                {
+                  "key": "password",
+                  "value": "password123",
+                  "type": "string"
+                },
+                {
+                  "key": "username",
+                  "value": "admin",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseURL}}/booking",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "booking"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Ping",
+      "item": [
+        {
+          "name": "HealthCheck",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// 7. HEALTH CHECK\r",
+                  "\r",
+                  "var statusCode = pm.response.code;\r",
+                  "\r",
+                  "if (statusCode === 201) {\r",
+                  "    \r",
+                  "    // Summary #1: Check API availability\r",
+                  "    pm.test(\"Validate that status code is 201 - Check API availability\", function () {\r",
+                  "        pm.response.to.have.status(201);\r",
+                  "    });\r",
+                  "\r",
+                  "    // Summary #2: Validate performance\r",
+                  "    pm.test(\"Validate that response time is less than 300 ms\", function () {\r",
+                  "        pm.expect(pm.response.responseTime).to.be.below(300);\r",
+                  "    });\r",
+                  "\r",
+                  "    pm.test(\"Validate that API is responsive and returns 201\", function () {\r",
+                  "        pm.response.to.have.status(201);\r",
+                  "    });\r",
+                  "\r",
+                  "} else {\r",
+                  "    \r",
+                  "    // Negative Case: Handle unexpected status codes\r",
+                  "    pm.test(\"Validate that unexpected status code triggers an error\", function () {\r",
+                  "        pm.expect.fail(\"Expected status code 201, but received \" + statusCode);\r",
+                  "    });\r",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseURL}}/ping",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "ping"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
